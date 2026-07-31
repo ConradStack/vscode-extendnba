@@ -2,7 +2,7 @@
   "name": "extendnba",
   "displayName": "extendnba",
   "description": "Additional indicators for Non-basic ASCII",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.125.0"
   },
@@ -19,7 +19,22 @@
         "command": "extendnba.helloWorld",
         "title": "Hello World"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "extendnba",
+      "properties": {
+        "extendnba.ignorePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/.git/**"
+          ],
+          "description": "Glob patterns for files/paths that should be ignored by the non-basic ASCII gutter indicator and Problems panel diagnostic. Patterns are matched against both the workspace-relative path and the absolute file path (e.g. \"**/.git/**\", \"**/*.min.js\")."
+        }
+      }
+    }
   },
   "scripts": {
     "compile": "node esbuild.js",
@@ -40,5 +55,8 @@
     "esbuild@0.28.1": true,
     "keytar@7.9.0": true,
     "@vscode/vsce-sign@2.0.9": true
+  },
+  "dependencies": {
+    "minimatch": "^10.2.6"
   }
 }

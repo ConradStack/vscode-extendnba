@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { minimatch } from 'minimatch';
 
 // A "basic ASCII" character is a printable character in the range 0x20-0x7E,
 // plus the common whitespace control characters (tab, line feed, carriage return).
@@ -11,6 +12,13 @@ const NON_BASIC_ASCII_RE_GLOBAL = /[^\x09\x0A\x0D\x20-\x7E]/g;
 
 const DIAGNOSTIC_MESSAGE = 'Non-basic ASCII characters present';
 const DIAGNOSTIC_SOURCE = 'extendnba';
+const CONFIG_SECTION = 'extendnba';
+
+// Document URI schemes that represent a "real" file worth analyzing. Other
+// schemes (e.g. "git", "gitlens", "output", "vscode-userdata", ...) are used by
+// VS Code and other extensions for virtual/diff/temporary documents that
+// shouldn't be reported as problems in the user's actual files.
+const ANALYZABLE_SCHEMES = new Set(['file', 'untitled']);
 
 let gutterDecorationType: vscode.TextEditorDecorationType;
 let diagnosticCollection: vscode.DiagnosticCollection;
@@ -70,7 +78,45 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 		vscode.workspace.onDidCloseTextDocument(document => {
 			diagnosticCollection.delete(document.uri);
+		}),
+		vscode.workspace.onDidChangeConfiguration(event => {
+			if (event.affectsConfiguration(`${CONFIG_SECTION}.ignorePatterns`)) {
+				// Ignore patterns changed: re-evaluate everything currently open.
+				vscode.window.visibleTextEditors.forEach(editor => updateEditor(editor));
+			}
 		})
+	);
+}
+
+/**
+ * Reads the user-configurable list of glob patterns to ignore.
+ */
+function getIgnorePatterns(): string[] {
+	const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
+	const patterns = config.get<string[]>('ignorePatterns', []);
+	return Array.isArray(patterns) ? patterns : [];
+}
+
+/**
+ * Determines whether a document should be analyzed at all: it must be backed
+ * by a real (or untitled) file, and must not match any of the user's
+ * configured ignore glob patterns.
+ */
+function shouldAnalyze(document: vscode.TextDocument): boolean {
+	if (!ANALYZABLE_SCHEMES.has(document.uri.scheme)) {
+		return false;
+	}
+
+	const patterns = getIgnorePatterns();
+	if (patterns.length === 0) {
+		return true;
+	}
+
+	const relativePath = vscode.workspace.asRelativePath(document.uri, false);
+	const fsPath = document.uri.fsPath;
+
+	return !patterns.some(pattern =>
+		minimatch(relativePath, pattern, { dot: true }) || minimatch(fsPath, pattern, { dot: true })
 	);
 }
 
@@ -79,6 +125,13 @@ export function activate(context: vscode.ExtensionContext) {
  */
 function updateEditor(editor: vscode.TextEditor): void {
 	const document = editor.document;
+
+	if (!shouldAnalyze(document)) {
+		editor.setDecorations(gutterDecorationType, []);
+		diagnosticCollection.delete(document.uri);
+		return;
+	}
+
 	const decorations: vscode.DecorationOptions[] = [];
 
 	for (let line = 0; line < document.lineCount; line++) {
@@ -96,6 +149,11 @@ function updateEditor(editor: vscode.TextEditor): void {
  * Recomputes the Problems panel diagnostic for a given document.
  */
 function updateDiagnostics(document: vscode.TextDocument): void {
+	if (!shouldAnalyze(document)) {
+		diagnosticCollection.delete(document.uri);
+		return;
+	}
+
 	const text = document.getText();
 	NON_BASIC_ASCII_RE_GLOBAL.lastIndex = 0;
 	const match = NON_BASIC_ASCII_RE_GLOBAL.exec(text);
