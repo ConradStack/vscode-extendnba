@@ -1,0 +1,44 @@
+{
+  "name": "extendnba",
+  "displayName": "extendnba",
+  "description": "Additional indicators for Non-basic ASCII",
+  "version": "0.0.2",
+  "engines": {
+    "vscode": "^1.125.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extendnba.helloWorld",
+        "title": "Hello World"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "node esbuild.js",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "vsce package",
+    "clean": "rm -rf dist",
+    "distclean": "rm -rf dist node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/vscode": "^1.125.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "0.28.1",
+    "typescript": "^6.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "keytar@7.9.0": true,
+    "@vscode/vsce-sign@2.0.9": true
+  }
+}

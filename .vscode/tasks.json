@@ -1,0 +1,69 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "watch",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"dependsOn": [
+                "npm: watch:esbuild",
+                "npm: watch:tsc"
+            ],
+			"presentation": {
+				"reveal": "never"
+			}
+		},
+		{
+			"label": "npm: compile",
+			"type": "npm",
+			"script": "compile",
+			"group": "none",
+			"problemMatcher": []
+		},
+		{
+			"label": "npm: watch:esbuild",
+			"group": "build",
+			"type": "npm",
+			"script": "watch:esbuild",
+			"isBackground": true,
+			"problemMatcher": [],
+			"presentation": {
+                "group": "watch",
+                "close": true,
+                "showReuseMessage": false
+            }
+		},
+		{
+            "label": "npm: watch:tsc",
+            "group": "build",
+            "type": "npm",
+            "script": "watch:tsc",
+			"isBackground": true,
+            "problemMatcher": [],
+            "presentation": {
+                "group": "watch",
+				"focus": true,
+                "close": true,
+                "showReuseMessage": false
+            }
+        },
+		{
+			"type": "shell",
+			"label": "clean",
+			"command": "rm",
+			"args": ["-rf", "out"],
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"type": "npm",
+			"script": "package",
+			"dependsOn": "npm: compile",
+			"group": "none",
+			"problemMatcher": [],
+			"label": "npm: package"
+		}
+	]
+}
