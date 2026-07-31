@@ -1,8 +1,9 @@
 {
   "name": "extendnba",
   "displayName": "extendnba",
-  "description": "Additional indicators for Non-basic ASCII",
+  "description": "Additional indicators of non-basic ASCII",
   "version": "0.0.3",
+  "publisher": "ConradStack",
   "engines": {
     "vscode": "^1.125.0"
   },
